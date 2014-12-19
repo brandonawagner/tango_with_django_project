@@ -1,3 +1,28 @@
 from django.test import TestCase
+from rango.models import Category, Page
+from django.core.urlresolvers import reverse
 
 # Create your tests here.
+class CategoryMethodTests(TestCase):
+
+
+
+    def test_slug_line_creation(self):
+             """
+             slug_line_creation checks to make sure that when we add a category an appropriate slug line is created
+             i.e. "Random Category String" -> "random-category-string"
+             """
+
+             cat = Category(name="Random Category String")
+             cat.save()
+             self.assertEqual(cat.slug, 'random-category-string')
+class IndexViewTests(TestCase):
+
+    def test_index_view_with_no_categories(self):
+        """
+        If no questions exist, an appropriate message should be displayed.
+        """
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "There are no categories present.")
+        self.assertQuerysetEqual(response.context['categories'], [])

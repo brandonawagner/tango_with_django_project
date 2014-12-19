@@ -1,13 +1,9 @@
-<!DOCTYPE html>
+{% extends 'base.html' %}
 
 {% load static %}
-<html>
 
-    <head>
-        <title>Rango</title>
-    </head>
-
-        <body>
+{% block title %}Rango{%endblock%}
+{%block body_block %}
             {% if user.is_authenticated %}
             <h1>Rango says... hello {{ user.username }}!</h1>
             <a href="/rango/logout/">Logout</a><br>
@@ -19,7 +15,7 @@
              {% if categories %}
              <ul>
                  {% for category in categories %}
-                 <li><a href="/rango/category/{{ category.slug }}">{{ category.name }}</a></li>
+                 <li><a href="{% url 'category' category.slug %}">{{ category.name }}</a></li>
                  {% endfor %}
              </ul>
              {% else %}
@@ -41,9 +37,4 @@
 
              <a href="/rango/add_category">Add a New Category</a>
             <img src="{% static 'merandolph.jpg' %}" alt="Picture of Rango" />
-        <! -- New line -->
-
-
-        </body>
-
-</html>
+{%endblock%}

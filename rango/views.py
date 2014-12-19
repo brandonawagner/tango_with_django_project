@@ -24,10 +24,7 @@ def index(request):
 
 def about(request):
 
-    context = RequestContext(request)
-    context_dict = {}
-
-    return render('rango/about.html',context_dict,context)
+    return render(request,'rango/about.html')
 
 def category(request, category_name_slug):
     context_dict = {}
@@ -97,15 +94,15 @@ def add_page(request, category_name_slug):
                             page.views = 0
                             page.save()
                             # probably better to use a redirect here.
-                            return category(request, category_name_slug)
+                            return HttpResponseRedirect('/rango/')
                     else:
                             print (form.errors)
             else:
                 form = PageForm()
 
-            context_dict = {'form':form, 'category': cat}
+                context_dict = {'form':form, 'category': cat}
 
-    return render(request, 'rango/category/add_page.html', context_dict)
+                return render(request, 'rango/'+category_name_slug+'/add_page.html', context_dict)
 
 
 
@@ -161,10 +158,9 @@ def register(request):
         user_form = UserForm()
         profile_form = UserProfileForm()
 
+    context_dict = {'user_form': user_form, 'profile_form': profile_form, 'registered': registered}
     # Render the template depending on the context.
-    return render(request,
-            'rango/register.html',
-            {'user_form': user_form, 'profile_form': profile_form, 'registered': registered} )
+    return render(request,'rango/register.html',context_dict)
 def user_login(request):
 
     # If the request is a HTTP POST, try to pull out the relevant information.

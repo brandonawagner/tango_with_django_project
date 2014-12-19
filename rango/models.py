@@ -12,6 +12,7 @@ class Category(models.Model):
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
+
         super(Category,self).save(*args,**kwargs) #didn't add unique=tre because it was acting funny
 
     def __str__(self):
