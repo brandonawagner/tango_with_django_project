@@ -6,9 +6,13 @@ from django.template import RequestContext
 from rango.models import Category, Page
 from rango.forms import CategoryForm,PageForm,UserForm,UserProfileForm
 from rango.bing_search import run_query
+from datetime import datetime
+
 
 
 def index(request):
+    request.session.set_test_cookie()
+
     # Query the database for a list of ALL categories currently stored.
     # Order the categories by no. likes in descending order.
     # Retrieve the top 5 only - or all if less than 5.
@@ -18,8 +22,27 @@ def index(request):
 
     context_dict = {'categories': category_list, 'pages': page_list}
 
-    # Render the response and send it back!
-    return render(request, 'rango/index.html', context_dict)
+    # Get the number of visits to the site.
+    # We use the COOKIES.get() function to obtain the visits cookie.
+    # If the cookie exists, the value returned is casted to an integer.
+    # If the cookie doesn't exist, we default to zero and cast that.
+    visits = int(request.COOKIES.get('visits', '0'))
+    reset_last_visit_time = False
+    response = render(request,'rango/index.html',context_dict)
+    #Does the cookie last_visit exist?
+    if 'last_visit' in request.COOKIES:
+        # Yes it does! Get the cookie's value.
+        last_visit = request.COOKIES.get('last_visit')
+        #Cast the value to a Python date/time object
+        last_visit_time = datetime.strptime(last_visit[:7], "%Y-%m-%d %H:%M:%S")
+
+        # Obtain our Response object early so we can add cookie information.
+    if reset_last_visit_time:
+            response.set_cookie('last_visit', datetime.now())
+    response.set_cookie('visits', visits)
+
+    # Return response back to the user, updating any cookies that need changed.
+    return response
 
 
 
@@ -81,33 +104,36 @@ def add_category(request):
 
 @login_required()
 def add_page(request, category_name_slug):
-
+    context_dict = {}
     try:
             cat = Category.objects.get(slug=category_name_slug)
     except Category.DoesNotExist:
             cat = None
-            if request.method == 'POST':
-                form = PageForm(request.POST)
-                if form.is_valid():
-                    if cat:
-                            page = form.save(commit=False)
-                            page.category = cat
-                            page.views = 0
-                            page.save()
-                            # probably better to use a redirect here.
-                            return HttpResponseRedirect('/rango/')
-                    else:
-                            print (form.errors)
+    if request.method == 'POST':
+        form = PageForm(request.POST)
+        if form.is_valid():
+            if cat:
+                    page = form.save(commit=False)
+                    page.category = cat
+                    page.views = 0
+                    page.save()
+                    # probably better to use a redirect here.
+                    return HttpResponseRedirect('/rango/')
             else:
-                form = PageForm()
+                    print (form.errors)
+    else:
+        form = PageForm()
 
-                context_dict = {'form':form, 'category': cat}
+        context_dict = {'form':form, 'category': cat}
 
-                return render(request, "rango/category/"+str(category_name_slug)+"add_page.html", context_dict)
+    return render(request, "rango/add_page.html", context_dict)
 
 
 
 def register(request):
+    if request.session.test_cookie_worked():
+        print(">>>> TEST COOKIE WORKED")
+        request.session.delete_test_cookie()
 
     # A boolean value for telling the template whether the registration was successful.
     # Set to False initially. Code changes value to True when registration succeeds.
@@ -161,7 +187,8 @@ def register(request):
 
     context_dict = {'user_form': user_form, 'profile_form': profile_form, 'registered': registered}
     # Render the template depending on the context.
-    return render(request,'rango/register.html',context_dict)
+    return render(request,'registration/registration_form.html',context_dict)
+
 def user_login(request):
 
     # If the request is a HTTP POST, try to pull out the relevant information.
@@ -198,7 +225,7 @@ def user_login(request):
     else:
         # No context variables to pass to the template system, hence the
         # blank dictionary object...
-        return render(request, 'rango/login.html', {})
+        return render(request, 'registration/login.html', {})
 
 @login_required
 def restricted(request):
